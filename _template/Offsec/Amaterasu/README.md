@@ -1,1 +1,56 @@
+# Amaterasu
+
+## Summary
+Amaterasu is a medium-difficulty Proving Grounds machine that demonstrates a full exploitation chain involving REST API enumeration, arbitrary file write via path traversal, SSH key injection, and Linux privilege escalation through cron wildcard injection.
+
+The box emphasizes identifying non-standard web services, abusing insecure file upload functionality, and exploiting poorly written privileged scripts.
+
+---
+
+## Platform
+- Platform: OffSec Proving Grounds
+- Difficulty: Medium
+- Focus Areas: Web/API Exploitation, Linux Privilege Escalation, File Upload Abuse
+- Status: Completed
+
+---
+
+## Skills Demonstrated
+- Enumeration
+- Initial Access
+- Privilege Escalation
+- Detection / Defensive Thinking
+
+---
+
+## Tools Used
+- Nmap
+- curl
+- ffuf
+- SSH
+- tar
+
+---
+
+## Reconnaissance
+A full TCP port scan revealed multiple services:
+- FTP (anonymous access enabled)
+- SSH on a non-standard port (25022)
+- HTTP services on ports 40080 and 33414
+
+The web service on port 40080 served a static page and provided no attack surface.  
+The service on port 33414 was identified as a Werkzeug-based Python application, suggesting a REST API.
+
+Fuzzing revealed endpoints:
+- `/help`
+- `/info`
+
+The `/help` endpoint disclosed additional functionality:
+- `/file-list?dir=`
+- `/file-upload`
+
+---
+
+## Initial Access
+The `/file-list` endpoint allowed directory enumeration across the filesystem, revealing sensitive paths such as:
 
