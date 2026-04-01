@@ -1,5 +1,5 @@
-Netmon
-Summary
+**Netmon
+**Summary
 
 Netmon is a Windows machine running PRTG Network Monitor. Initial access was achieved via anonymous FTP access, exposing configuration backups with credentials. A password pattern allowed successful login, and an authenticated RCE exploit led to a SYSTEM shell.
 
